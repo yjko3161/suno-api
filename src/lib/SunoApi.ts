@@ -18,7 +18,7 @@ const cache = globalForSunoApi.sunoApiCache || new Map<string, SunoApi>();
 globalForSunoApi.sunoApiCache = cache;
 
 const logger = pino();
-export const DEFAULT_MODEL = 'chirp-v3-5';
+export const DEFAULT_MODEL = 'chirp-crow';
 
 export interface AudioInfo {
   id: string; // Unique identifier for the audio
@@ -326,11 +326,19 @@ class SunoApi {
       // await this.click(page, { x: 318, y: 13 });
     } catch(e) {}
 
-    const textarea = page.locator('.custom-textarea');
+    const textarea = page.locator('[data-testid="lyrics-textarea"]');
     await this.click(textarea);
     await textarea.pressSequentially('Lorem ipsum', { delay: 80 });
 
-    const button = page.locator('button[aria-label="Create"]').locator('div.flex');
+    // Style of Music 필드도 채워야 Create 버튼 활성화됨
+    const styleTextarea = page.locator('textarea').nth(1);
+    await this.click(styleTextarea);
+    await styleTextarea.pressSequentially('pop rock upbeat', { delay: 80 });
+
+    // Create 버튼 활성화 대기 후 클릭
+    const button = page.locator('button[aria-label="Create song"]');
+    await button.waitFor({ state: 'attached', timeout: 5000 });
+    await page.waitForTimeout(1000); // React state 반영 대기
     this.click(button);
 
     const controller = new AbortController();
